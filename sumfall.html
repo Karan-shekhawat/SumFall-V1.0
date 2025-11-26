@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SumFall: The Accumulator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d0e12;
+            --grid-color: #1a1e24;
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff0055;
+            --neon-green: #00ff9d;
+            --neon-yellow: #f3ff00;
+            --text-color: #e0e0e0;
+            --panel-bg: #14161b;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Share Tech Mono', monospace;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #game-container {
+            display: flex;
+            width: 900px;
+            height: 600px;
+            background: var(--panel-bg);
+            border: 2px solid var(--grid-color);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+            position: relative;
+        }
+
+        /* --- LEFT PANEL: DROP ZONE --- */
+        #drop-zone {
+            flex: 1.5;
+            position: relative;
+            background-image:
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 50px 50px;
+            border-right: 2px solid var(--grid-color);
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* --- RIGHT PANEL: THE REACTOR --- */
+        #reactor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            background: linear-gradient(135deg, #14161b 0%, #0a0b0e 100%);
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hud-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+
+        #reactor-display {
+            background: #000;
+            width: 100%;
+            padding: 20px;
+            border: 2px solid #333;
+            border-radius: 4px;
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+        }
+
+        #current-total {
+            font-size: 64px;
+            color: var(--neon-pink);
+            text-shadow: 0 0 10px var(--neon-pink), 0 0 20px var(--neon-pink);
+            display: block;
+        }
+
+        .vent-progress {
+            width: 100%;
+            height: 6px;
+            background: #222;
+            margin-top: 10px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        #vent-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--neon-cyan);
+            transition: width 0.2s;
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        #input-container {
+            width: 100%;
+            position: relative;
+        }
+
+        #math-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 32px;
+            text-align: center;
+            padding: 10px;
+            outline: none;
+            /* Hide Spinner */
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
+        /* Hide Spinner Webkit */
+        #math-input::-webkit-outer-spin-button,
+        #math-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        #math-input::placeholder {
+            color: #333;
+            font-size: 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 100%;
+            gap: 10px;
+            margin-top: auto;
+            border-top: 1px solid #333;
+            padding-top: 20px;
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+
+        .stat-val {
+            font-size: 24px;
+            color: #fff;
+        }
+
+        /* --- OVERLAYS --- */
+        #start-screen,
+        #game-over-screen,
+        #level-screen,
+        #profile-screen,
+        #leaderboard-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(13, 14, 18, 0.98);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 48px;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 15px var(--neon-cyan);
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #aaa;
+            max-width: 600px;
+        }
+
+        .btn {
+            background: var(--neon-pink);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 24px;
+            cursor: pointer;
+            margin-top: 30px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 15px var(--neon-pink);
+            transition: transform 0.1s;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 15px;
+            cursor: pointer;
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 243, 255, 0.1);
+        }
+
+        /* --- PROFILE & LEADERBOARD UI --- */
+        #profile-list,
+        #leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            width: 400px;
+        }
+
+        .profile-item,
+        .leaderboard-item {
+            background: #222;
+            padding: 10px;
+            cursor: pointer;
+            border: 1px solid #444;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .profile-item:hover {
+            border-color: var(--neon-green);
+            color: var(--neon-green);
+        }
+
+        .leaderboard-item {
+            cursor: default;
+        }
+
+        .leaderboard-rank {
+            width: 30px;
+            text-align: left;
+            color: var(--neon-yellow);
+        }
+
+        .leaderboard-name {
+            flex-grow: 1;
+            text-align: left;
+        }
+
+        .leaderboard-score {
+            color: var(--neon-pink);
+        }
+
+        .leaderboard-level {
+            color: #666;
+            font-size: 12px;
+            margin-right: 10px;
+            align-self: center;
+        }
+
+        #new-profile-input {
+            background: #111;
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            padding: 10px;
+            font-family: inherit;
+            font-size: 18px;
+            width: 300px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .player-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            text-align: right;
+        }
+
+        .player-name {
+            color: var(--neon-green);
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .player-best {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* --- LIFELINE UI (UPDATED) --- */
+        .life-container {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 5px;
+            /* Moved to top, no border needed now */
+        }
+
+        .heart {
+            font-size: 32px;
+            color: #444;
+            /* Empty heart color */
+            margin: 0 5px;
+            display: inline-block;
+            transition: color 0.2s;
+        }
+
+        .heart.active {
+            color: var(--neon-pink);
+            text-shadow: 0 0 10px var(--neon-pink);
+        }
+
+        /* --- EFFECTS --- */
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+        }
+
+        .flash {
+            animation: flash 0.3s ease-out;
+        }
+
+        .flash-red {
+            animation: flashRed 0.4s ease-out;
+        }
+
+        .flash-green {
+            animation: flashGreen 0.4s ease-out;
+        }
+
+        @keyframes shake {
+
+            10%,
+            90% {
+                transform: translate3d(-1px, 0, 0);
+            }
+
+            20%,
+            80% {
+                transform: translate3d(2px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-4px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(4px, 0, 0);
+            }
+        }
+
+        @keyframes flash {
+            0% {
+                background-color: rgba(0, 243, 255, 0.5);
+            }
+
+            100% {
+                background-color: transparent;
+            }
+        }
+
+        @keyframes flashRed {
+            0% {
+                background-color: rgba(255, 0, 85, 0.6);
+            }
+
+            100% {
+                background-color: transparent;
+            }
+        }
+
+        @keyframes flashGreen {
+            0% {
+                background-color: rgba(0, 255, 157, 0.6);
+            }
+
+            100% {
+                background-color: transparent;
+            }
+        }
+
+        #message-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40px;
+            color: var(--neon-green);
+            text-shadow: 0 0 20px var(--neon-green);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s;
+            text-align: center;
+            white-space: pre-line;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #111;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
+
+    <div id="game-container">
+        <!-- Message Overlay (Vent/Level Up) -->
+        <div id="message-area">SYSTEM VENTED</div>
+
+        <!-- Profile Selection Screen (First Load) -->
+        <div id="profile-screen">
+            <h1 style="color: var(--neon-yellow)">IDENTITY VERIFICATION</h1>
+            <p>Select Operator Profile</p>
+
+            <div id="profile-list">
+                <!-- Profile items injected here -->
+            </div>
+
+            <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 20px;">
+                <p style="font-size: 14px;">OR CREATE NEW IDENTITY</p>
+                <input type="text" id="new-profile-input" placeholder="ENTER CODENAME" maxlength="12">
+                <br>
+                <button class="btn btn-secondary" onclick="createNewProfile()">Create & Login</button>
+            </div>
+        </div>
+
+        <!-- Leaderboard Screen -->
+        <div id="leaderboard-screen" class="hidden">
+            <h1 style="color: var(--neon-yellow)">CLASSIFIED RECORDS</h1>
+            <p style="margin-bottom: 20px;">Top Operatives (Local Database)</p>
+
+            <div id="leaderboard-list">
+                <!-- Leaderboard items injected here -->
+            </div>
+
+            <button class="btn" onclick="showStartScreen()">Return</button>
+        </div>
+
+        <!-- Level Up Screen (Pause) -->
+        <div id="level-screen" class="hidden">
+            <h1 style="color: var(--neon-green)">SYSTEM VENTED</h1>
+            <p>Reactor Cooled. Buffer Cleared.</p>
+
+            <!-- REWARD SECTION -->
+            <div
+                style="background: rgba(0, 243, 255, 0.1); border: 1px solid var(--neon-cyan); padding: 15px; margin: 20px 0; width: 80%; box-shadow: 0 0 10px rgba(0, 243, 255, 0.1);">
+                <div style="color: var(--neon-cyan); font-size: 12px; letter-spacing: 2px; margin-bottom: 5px;">OPERATOR
+                    RANK STATUS</div>
+                <div id="rank-title" style="font-size: 28px; color: #fff; text-shadow: 0 0 10px var(--neon-cyan);">DATA
+                    CLERK</div>
+            </div>
+
+            <p style="color: var(--neon-green); font-weight: bold;">+1 LIFELINE AWARDED</p>
+
+            <div style="margin: 10px 0;">
+                <div class="hud-label">Entering Level</div>
+                <div class="stat-val" id="next-level-val" style="color: var(--neon-yellow)">2</div>
+            </div>
+            <button class="btn" onclick="nextLevel()">Initiate Next Wave</button>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="hidden">
+            <div class="player-badge">
+                <div class="player-name" id="display-name">UNKNOWN</div>
+                <div class="player-best">HIGH SCORE: <span id="display-highscore">0</span></div>
+                <button class="btn-secondary" style="font-size: 10px; padding: 5px 10px; margin-top:5px;"
+                    onclick="showProfileScreen()">SWITCH USER</button>
+            </div>
+
+            <h1>SUMFALL</h1>
+            <p><strong>THE ACCUMULATOR PROTOCOL</strong></p>
+            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">v1.4.0 // DESIGN UPDATE</p>
+            <p><strong>RULES OF ENGAGEMENT:</strong><br>
+                1. SMALL Numbers fall FAST.<br>
+                2. BIG Numbers fall SLOW.<br>
+                3. Wrong Input = <strong>-1 Heart</strong>.<br>
+                4. Floor Impact = <strong>-2 Hearts</strong>.</p>
+
+            <div style="display:flex; gap: 20px;">
+                <button class="btn" onclick="startGame()">Initialize</button>
+                <button class="btn btn-secondary" onclick="showLeaderboard()">Records</button>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="hidden">
+            <h1 style="color: var(--neon-pink)">SYSTEM FAILURE</h1>
+            <p>Integrity Critical. Shutdown Imminent.</p>
+            <div style="margin: 20px 0;">
+                <div class="hud-label">Final Score</div>
+                <div class="stat-val" id="final-score">0</div>
+                <div class="hud-label" style="margin-top:10px;">Personal Best</div>
+                <div class="stat-val" id="final-pb" style="color: var(--neon-yellow); font-size: 18px;">0</div>
+            </div>
+            <button class="btn" onclick="startGame()">Reboot System</button>
+            <button class="btn btn-secondary" onclick="showStartScreen()">Main Menu</button>
+        </div>
+
+        <!-- Left Panel: Matrix -->
+        <div id="drop-zone">
+            <canvas id="gameCanvas"></canvas>
+            <div
+                style="position: absolute; bottom: 0; width: 100%; height: 4px; background: var(--neon-pink); box-shadow: 0 0 15px var(--neon-pink);">
+            </div>
+        </div>
+
+        <!-- Right Panel: Reactor -->
+        <div id="reactor-panel">
+            <div style="width: 100%;">
+                <!-- MOVED TO TOP -->
+                <div class="life-container">
+                    <div class="hud-label">SYS INTEGRITY</div>
+                    <div id="lifeline-display">
+                        <!-- Hearts go here -->
+                    </div>
+                </div>
+
+                <div class="hud-label">Reactor Core</div>
+                <div id="reactor-display">
+                    <span id="current-total">0</span>
+                </div>
+
+                <div style="display: flex; justify-content: space-between;">
+                    <div class="hud-label">Capacity</div>
+                    <div class="hud-label" style="color: var(--neon-cyan)">Target: <span id="target-val">50</span></div>
+                </div>
+                <div class="vent-progress">
+                    <div id="vent-bar"></div>
+                </div>
+            </div>
+
+            <div id="input-container">
+                <div class="hud-label">Manual Override Input</div>
+                <input type="number" id="math-input" placeholder="Type Sum + Enter" autocomplete="off">
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="hud-label">Score</div>
+                    <div class="stat-val" id="score-val">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="hud-label">Level</div>
+                    <div class="stat-val" id="level-val">1</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* * SUMFALL ENGINE
+         * V1.4: UI Updates (Hearts, Top Position, Clean Input)
+         */
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const inputField = document.getElementById('math-input');
+
+        // --- FIREBASE CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBOlj6mV88C7NT1Vrdj0C0DU2yKMBdVpwc",
+            authDomain: "sumfall.firebaseapp.com",
+            projectId: "sumfall",
+            storageBucket: "sumfall.firebasestorage.app",
+            messagingSenderId: "160498327658",
+            appId: "1:160498327658:web:938ae288d3267377e9ea13"
+        };
+
+        let db = null;
+        let isOnline = false;
+
+        try {
+            if (firebaseConfig.apiKey !== "YOUR_API_KEY_HERE") {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                isOnline = true;
+                console.log("Firebase Connected");
+            } else {
+                console.warn("Firebase Config missing. Running in Offline Mode.");
+            }
+        } catch (e) {
+            console.error("Firebase Init Error:", e);
+        }
+
+        // --- PROFILE SYSTEM ---
+        let profileSystem = {
+            profiles: {},
+            currentProfileId: null,
+            leaderboardCache: [],
+
+            async init() {
+                // Load local profiles for identity
+                const stored = localStorage.getItem('sumfall_profiles');
+                if (stored) {
+                    this.profiles = JSON.parse(stored);
+                }
+
+                // If online, try to fetch global leaderboard to cache it
+                if (isOnline) {
+                    await this.fetchGlobalLeaderboard();
+                }
+
+                this.renderProfileList();
+            },
+
+            create(name) {
+                if (!name || name.trim() === "") return;
+                const id = 'user_' + Date.now();
+                this.profiles[id] = {
+                    id: id,
+                    name: name,
+                    highScore: 0,
+                    gamesPlayed: 0,
+                    maxLevel: 1
+                };
+                this.saveLocal();
+                this.select(id);
+            },
+
+            select(id) {
+                if (this.profiles[id]) {
+                    this.currentProfileId = id;
+                    this.updateUI();
+                    showStartScreen();
+                }
+            },
+
+            async saveGame(score, level) {
+                if (!this.currentProfileId) return;
+                const p = this.profiles[this.currentProfileId];
+
+                // Update Local Stats
+                let newHigh = false;
+                if (score > p.highScore) {
+                    p.highScore = score;
+                    newHigh = true;
+                }
+                if (level > p.maxLevel) p.maxLevel = level;
+                p.gamesPlayed++;
+
+                this.saveLocal();
+
+                // Sync to Global Leaderboard if Online
+                if (isOnline && db) {
+                    try {
+                        // We only send if it's a good score or just to track activity
+                        await db.collection("scores").doc(p.id).set({
+                            name: p.name,
+                            highScore: p.highScore, // Always send best score
+                            maxLevel: p.maxLevel,
+                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                        }, { merge: true });
+                        console.log("Score synced to cloud");
+                    } catch (e) {
+                        console.error("Cloud sync failed:", e);
+                    }
+                }
+            },
+
+            saveLocal() {
+                localStorage.setItem('sumfall_profiles', JSON.stringify(this.profiles));
+            },
+
+            getCurrent() {
+                return this.currentProfileId ? this.profiles[this.currentProfileId] : null;
+            },
+
+            async fetchGlobalLeaderboard() {
+                if (!isOnline || !db) return;
+                try {
+                    const snapshot = await db.collection("scores")
+                        .orderBy("highScore", "desc")
+                        .limit(10)
+                        .get();
+
+                    this.leaderboardCache = [];
+                    snapshot.forEach(doc => {
+                        this.leaderboardCache.push(doc.data());
+                    });
+                } catch (e) {
+                    console.error("Error fetching leaderboard:", e);
+                }
+            },
+
+            getLeaderboardData() {
+                if (isOnline && this.leaderboardCache.length > 0) {
+                    return this.leaderboardCache;
+                }
+                // Fallback to local
+                return Object.values(this.profiles).sort((a, b) => b.highScore - a.highScore);
+            },
+
+            renderProfileList() {
+                const list = document.getElementById('profile-list');
+                list.innerHTML = '';
+                const ids = Object.keys(this.profiles);
+
+                if (ids.length === 0) {
+                    list.innerHTML = '<div style="color:#666; padding:10px;">NO IDENTITIES FOUND</div>';
+                    return;
+                }
+
+                ids.forEach(id => {
+                    const p = this.profiles[id];
+                    const div = document.createElement('div');
+                    div.className = 'profile-item';
+                    div.innerHTML = `<span>${p.name}</span> <span>BEST: ${p.highScore}</span>`;
+                    div.onclick = () => this.select(id);
+                    list.appendChild(div);
+                });
+            },
+
+            updateUI() {
+                const p = this.getCurrent();
+                if (p) {
+                    document.getElementById('display-name').innerText = p.name;
+                    document.getElementById('display-highscore').innerText = p.highScore;
+                    document.getElementById('final-pb').innerText = p.highScore;
+                }
+            }
+        };
+
+        // --- GAME STATE ---
+        let state = {
+            isPlaying: false,
+            score: 0,
+            level: 1,
+            lifelines: 3,
+            reactorTotal: 0,
+            bankTarget: 50,
+            blocks: [],
+            particles: [],
+            lastTime: 0,
+            spawnTimer: 0,
+            spawnInterval: 2500, // ms
+            speedMultiplier: 1
+        };
+
+        // Constants
+        const LANE_COUNT = 5;
+        let LANE_WIDTH = 0;
+        const BLOCK_SIZE = 50;
+
+        // RANKS DEFINITION
+        function getRankTitle(lvl) {
+            if (lvl < 3) return "DATA CLERK";
+            if (lvl < 5) return "NUMBER CRUNCHER";
+            if (lvl < 8) return "LOGIC ENGINE";
+            if (lvl < 12) return "SILICON SAVANT";
+            return "QUANTUM CORE";
+        }
+
+        // Audio Context (Synthesized Sound)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'hit') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'vent') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(100, now);
+                osc.frequency.linearRampToValueAtTime(400, now + 0.5);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.5);
+                osc.start(now);
+                osc.stop(now + 0.5);
+            } else if (type === 'error') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else if (type === 'life-up') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.linearRampToValueAtTime(800, now + 0.3);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            }
+        }
+
+        // --- SCREEN MANAGEMENT ---
+        function showProfileScreen() {
+            hideAllScreens();
+            profileSystem.renderProfileList();
+            document.getElementById('profile-screen').classList.remove('hidden');
+        }
+
+        function createNewProfile() {
+            const name = document.getElementById('new-profile-input').value;
+            profileSystem.create(name);
+        }
+
+        function showStartScreen() {
+            hideAllScreens();
+            profileSystem.updateUI(); // Refresh high scores
+            document.getElementById('start-screen').classList.remove('hidden');
+        }
+
+        async function showLeaderboard() {
+            hideAllScreens();
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = '<div style="padding:20px; color:#666">LOADING DATA...</div>';
+            document.getElementById('leaderboard-screen').classList.remove('hidden');
+
+            // Refresh data if online
+            if (isOnline) {
+                await profileSystem.fetchGlobalLeaderboard();
+            }
+
+            const data = profileSystem.getLeaderboardData();
+            list.innerHTML = '';
+
+            if (data.length === 0) {
+                list.innerHTML = '<div style="padding:20px; color:#666">NO RECORDS FOUND</div>';
+            } else {
+                // Add Online/Offline Indicator
+                const statusDiv = document.createElement('div');
+                statusDiv.style.cssText = "font-size: 12px; color: #666; margin-bottom: 10px; text-align: right; width: 100%;";
+                statusDiv.innerText = isOnline ? "● LIVE GLOBAL DATA" : "○ LOCAL DATA ONLY";
+                if (isOnline) statusDiv.style.color = "var(--neon-green)";
+                list.appendChild(statusDiv);
+
+                data.forEach((p, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'leaderboard-item';
+
+                    // Add Trophy icons for top 3
+                    let rankDisplay = (index + 1) + '.';
+                    if (index === 0) rankDisplay = '🥇';
+                    if (index === 1) rankDisplay = '🥈';
+                    if (index === 2) rankDisplay = '🥉';
+
+                    div.innerHTML = `
+                        <span class="leaderboard-rank">${rankDisplay}</span>
+                        <span class="leaderboard-name">${p.name}</span>
+                        <span class="leaderboard-level">MAX LVL ${p.maxLevel}</span>
+                        <span class="leaderboard-score">${p.highScore}</span>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+        }
+
+        function hideAllScreens() {
+            const screens = ['start-screen', 'game-over-screen', 'level-screen', 'profile-screen', 'leaderboard-screen'];
+            screens.forEach(id => document.getElementById(id).classList.add('hidden'));
+        }
+
+        function resize() {
+            const rect = document.getElementById('drop-zone').getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            LANE_WIDTH = canvas.width / LANE_COUNT;
+        }
+
+        window.addEventListener('resize', resize);
+
+        // --- GAME LOOP ---
+
+        function startGame() {
+            resize();
+            hideAllScreens();
+
+            state = {
+                isPlaying: true,
+                score: 0,
+                level: 1,
+                lifelines: 3, // START WITH 3 LIVES
+                reactorTotal: 0,
+                bankTarget: 50,
+                blocks: [],
+                particles: [],
+                lastTime: performance.now(),
+                spawnTimer: 0,
+                spawnInterval: 2500,
+                speedMultiplier: 1
+            };
+
+            updateUI();
+            inputField.value = '';
+            inputField.focus();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function gameOver() {
+            state.isPlaying = false;
+            playSound('error');
+
+            // SAVE STATS
+            profileSystem.saveGame(state.score, state.level);
+            profileSystem.updateUI();
+
+            document.getElementById('game-over-screen').classList.remove('hidden');
+            document.getElementById('final-score').innerText = state.score;
+        }
+
+        function spawnBlock() {
+            const lane = Math.floor(Math.random() * LANE_COUNT);
+
+            // --- DYNAMIC DIFFICULTY CURVE (BALANCED) ---
+            let minVal = 1;
+            let maxVal = 9;
+
+            if (state.level === 1) maxVal = 9;
+            else if (state.level === 2) maxVal = 9;
+            else if (state.level === 3) {
+                if (Math.random() < 0.7) maxVal = 9;
+                else { minVal = 10; maxVal = 15; }
+            } else if (state.level === 4) {
+                if (Math.random() < 0.5) maxVal = 9;
+                else { minVal = 10; maxVal = 20; }
+            } else if (state.level >= 5 && state.level < 10) {
+                maxVal = 50;
+            } else if (state.level >= 10) {
+                maxVal = 99;
+            }
+
+            // Generate value based on range
+            let val = Math.floor(Math.random() * (maxVal - minVal + 1)) + minVal;
+
+            // --- INVERSE SPEED FORMULA ---
+            // Base speed from level
+            let baseLevelSpeed = (30 + (state.level * 5)) * (canvas.height / 600);
+            // Multiplier: Small numbers fall fast, Big numbers fall slow
+            // Val 1 = ~3x speed. Val 50 = ~1.1x speed.
+            let valMultiplier = 1 + (15 / (val + 5));
+
+            let speed = baseLevelSpeed * valMultiplier;
+
+            state.blocks.push({
+                x: (lane * LANE_WIDTH) + (LANE_WIDTH / 2),
+                y: -50,
+                value: val,
+                lane: lane,
+                speed: speed,
+                color: `hsl(${Math.random() * 60 + 160}, 100%, 50%)`
+            });
+        }
+
+        function createExplosion(x, y, color) {
+            for (let i = 0; i < 10; i++) {
+                state.particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    life: 1.0, color: color
+                });
+            }
+        }
+
+        function loseLife(amount) {
+            state.lifelines -= amount;
+            if (state.lifelines < 0) state.lifelines = 0;
+
+            // Visual Feedback
+            const container = document.getElementById('game-container');
+            container.classList.add('flash-red');
+            container.classList.add('shake');
+            setTimeout(() => {
+                container.classList.remove('flash-red');
+                container.classList.remove('shake');
+            }, 400);
+
+            updateUI();
+
+            if (state.lifelines <= 0) {
+                gameOver();
+            }
+        }
+
+        function triggerVent() {
+            playSound('vent');
+            playSound('life-up'); // New Sound
+            const reactor = document.getElementById('reactor-panel');
+
+            // Add Life Reward
+            state.lifelines++;
+            const container = document.getElementById('game-container');
+            container.classList.add('flash-green');
+            setTimeout(() => container.classList.remove('flash-green'), 400);
+
+            state.score += state.reactorTotal;
+            state.reactorTotal = 0;
+            state.level++;
+            state.speedMultiplier += 0.1;
+            state.spawnInterval = Math.max(800, 2500 - (state.level * 150));
+            state.bankTarget = Math.floor(state.bankTarget * 1.5);
+
+            state.blocks.forEach(b => createExplosion(b.x, b.y, b.color));
+            state.blocks = [];
+
+            state.isPlaying = false;
+
+            setTimeout(() => {
+                // reactor.classList.remove('flash');
+                // document.body.classList.remove('shake');
+
+                // UPDATE LEVEL SCREEN WITH REWARDS
+                document.getElementById('next-level-val').innerText = state.level;
+                document.getElementById('rank-title').innerText = getRankTitle(state.level);
+
+                document.getElementById('level-screen').classList.remove('hidden');
+            }, 600);
+        }
+
+        function nextLevel() {
+            document.getElementById('level-screen').classList.add('hidden');
+            state.lastTime = performance.now();
+            state.isPlaying = true;
+            inputField.value = '';
+            inputField.focus();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function gameLoop(timestamp) {
+            if (!state.isPlaying) return;
+
+            const dt = (timestamp - state.lastTime) / 1000;
+            state.lastTime = timestamp;
+
+            state.spawnTimer += dt * 1000;
+
+            // LIMIT BLOCKS ON SCREEN (Max 2 for early levels, Max 3 for later)
+            const maxBlocks = state.level < 5 ? 2 : 3;
+
+            if (state.spawnTimer > state.spawnInterval) {
+                if (state.blocks.length < maxBlocks) {
+                    spawnBlock();
+                    state.spawnTimer = 0;
+                }
+            }
+
+            for (let i = state.blocks.length - 1; i >= 0; i--) {
+                let b = state.blocks[i];
+                b.y += b.speed * dt;
+
+                // FLOOR COLLISION = -2 LIVES
+                if (b.y > canvas.height) {
+                    state.blocks.splice(i, 1); // Destroy block
+                    playSound('error');
+                    loseLife(2);
+                }
+            }
+
+            for (let i = state.particles.length - 1; i >= 0; i--) {
+                let p = state.particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= dt * 2;
+                if (p.life <= 0) state.particles.splice(i, 1);
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = '#1a1e24';
+            ctx.lineWidth = 1;
+            for (let i = 1; i < LANE_COUNT; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * LANE_WIDTH, 0);
+                ctx.lineTo(i * LANE_WIDTH, canvas.height);
+                ctx.stroke();
+            }
+
+            ctx.font = 'bold 24px Share Tech Mono';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            state.blocks.forEach(b => {
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = b.color;
+                ctx.fillStyle = b.color;
+                ctx.fillRect(b.x - 20, b.y - 20, 40, 40);
+                ctx.fillStyle = '#000';
+                ctx.shadowBlur = 0;
+                ctx.fillText(b.value, b.x, b.y);
+            });
+
+            state.particles.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            });
+
+            updateUI();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function updateUI() {
+            document.getElementById('current-total').innerText = state.reactorTotal;
+            document.getElementById('target-val').innerText = state.bankTarget;
+            document.getElementById('score-val').innerText = state.score;
+            document.getElementById('level-val').innerText = state.level;
+
+            // Update Lifeline Hearts (Visual Update)
+            const lifeContainer = document.getElementById('lifeline-display');
+            lifeContainer.innerHTML = ''; // Clear previous hearts
+
+            // Render Hearts
+            // Show a max of 5 hearts visually to prevent overflow, if user has more, maybe just show number? 
+            // For now, let's just show them all, assuming user won't stack 20 lives easily.
+
+            for (let i = 0; i < 5; i++) { // Always show 5 slots
+                const heart = document.createElement('span');
+                heart.className = 'heart';
+                heart.innerHTML = '♥';
+
+                if (i < state.lifelines) {
+                    heart.classList.add('active');
+                }
+                lifeContainer.appendChild(heart);
+            }
+
+            const pct = Math.min(100, (state.reactorTotal / state.bankTarget) * 100);
+            const bar = document.getElementById('vent-bar');
+            bar.style.width = `${pct}%`;
+            if (pct > 80) bar.style.backgroundColor = '#ff0055';
+            else bar.style.backgroundColor = '#00f3ff';
+        }
+
+        inputField.addEventListener('keydown', (e) => {
+            if (!state.isPlaying) return;
+
+            if (e.key === 'Enter') {
+                const val = parseInt(inputField.value);
+                if (isNaN(val)) {
+                    inputField.value = '';
+                    return;
+                }
+
+                const sortedBlocks = [...state.blocks].sort((a, b) => b.y - a.y);
+                let hit = false;
+                for (let i = 0; i < sortedBlocks.length; i++) {
+                    let block = sortedBlocks[i];
+                    let expectedSum = state.reactorTotal + block.value;
+
+                    if (val === expectedSum) {
+                        hit = true;
+                        const originalIndex = state.blocks.indexOf(block);
+                        if (originalIndex > -1) {
+                            state.blocks.splice(originalIndex, 1);
+                            createExplosion(block.x, block.y, block.color);
+                        }
+                        state.reactorTotal = expectedSum;
+                        state.score += (block.value * 10);
+                        playSound('hit');
+                        document.getElementById('reactor-display').classList.add('flash');
+                        setTimeout(() => document.getElementById('reactor-display').classList.remove('flash'), 100);
+
+                        if (state.reactorTotal >= state.bankTarget) {
+                            triggerVent();
+                        }
+                        break;
+                    }
+                }
+
+                if (!hit) {
+                    playSound('error');
+                    // WRONG ANSWER = -1 LIFE
+                    loseLife(1);
+                }
+                inputField.value = '';
+            }
+        });
+
+        document.addEventListener('click', () => {
+            if (state.isPlaying) inputField.focus();
+        });
+
+        // Initialize
+        profileSystem.init();
+
+    </script>
+</body>
+
+</html>
