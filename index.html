@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -14,26 +13,20 @@
             --neon-pink: #ff0055;
             --neon-green: #00ff9d;
             --neon-yellow: #f3ff00;
-            --text-color: #e0e0e0;
-            --panel-bg: #14161b;
-        }
-
-        * {
-            box-sizing: border-box;
-            user-select: none;
+            --panel-bg: #111;
         }
 
         body {
             margin: 0;
-            padding: 0;
             background-color: var(--bg-color);
-            color: var(--text-color);
+            color: #fff;
             font-family: 'Share Tech Mono', monospace;
-            height: 100vh;
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
+            height: 100vh;
+            user-select: none;
         }
 
         #game-container {
@@ -54,8 +47,8 @@
                 linear-gradient(var(--grid-color) 1px, transparent 1px),
                 linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
             background-size: 50px 50px;
-            border-right: 2px solid var(--grid-color);
             overflow: hidden;
+            border-right: 2px solid var(--grid-color);
         }
 
         canvas {
@@ -64,30 +57,27 @@
             height: 100%;
         }
 
-        /* --- RIGHT PANEL: THE REACTOR --- */
+        /* --- RIGHT PANEL: REACTOR --- */
         #reactor-panel {
             flex: 1;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            padding: 20px;
-            background: linear-gradient(135deg, #14161b 0%, #0a0b0e 100%);
-            align-items: center;
             justify-content: space-between;
+            background: rgba(0, 0, 0, 0.3);
             position: relative;
-            z-index: 2;
         }
 
         .hud-label {
-            font-size: 14px;
             color: #666;
+            font-size: 12px;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
             margin-bottom: 5px;
         }
 
         #reactor-display {
             background: #000;
-            width: 100%;
             padding: 20px;
             border: 2px solid #333;
             border-radius: 4px;
@@ -106,10 +96,10 @@
 
         .vent-progress {
             width: 100%;
-            height: 6px;
+            height: 10px;
             background: #222;
-            margin-top: 10px;
-            border-radius: 3px;
+            margin-top: 5px;
+            position: relative;
             overflow: hidden;
         }
 
@@ -117,13 +107,13 @@
             width: 0%;
             height: 100%;
             background: var(--neon-cyan);
-            transition: width 0.2s;
+            transition: width 0.2s, background-color 0.2s;
             box-shadow: 0 0 10px var(--neon-cyan);
         }
 
+        /* --- INPUT AREA --- */
         #input-container {
-            width: 100%;
-            position: relative;
+            margin-bottom: 20px;
         }
 
         #math-input {
@@ -131,15 +121,12 @@
             background: transparent;
             border: none;
             border-bottom: 2px solid var(--neon-cyan);
-            color: var(--neon-cyan);
+            color: #fff;
             font-family: 'Share Tech Mono', monospace;
             font-size: 32px;
             text-align: center;
             padding: 10px;
             outline: none;
-            /* Hide Spinner */
-            -moz-appearance: textfield;
-            appearance: textfield;
         }
 
         /* Hide Spinner Webkit */
@@ -159,12 +146,12 @@
             grid-template-columns: 1fr 1fr;
             width: 100%;
             gap: 10px;
-            margin-top: auto;
-            border-top: 1px solid #333;
-            padding-top: 20px;
         }
 
         .stat-box {
+            background: #1a1e24;
+            padding: 10px;
+            border-radius: 4px;
             text-align: center;
         }
 
@@ -178,23 +165,26 @@
         #game-over-screen,
         #level-screen,
         #profile-screen,
-        #leaderboard-screen {
+        #create-profile-screen,
+        #leaderboard-screen,
+        #welcome-screen {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(13, 14, 18, 0.98);
-            z-index: 10;
+            background: rgba(13, 14, 18, 0.95);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            text-align: center;
+            z-index: 10;
+            backdrop-filter: blur(5px);
         }
 
         h1 {
             font-size: 48px;
+            margin: 0 0 20px 0;
             color: var(--neon-cyan);
             text-shadow: 0 0 15px var(--neon-cyan);
             margin-bottom: 10px;
@@ -215,11 +205,11 @@
             font-family: 'Share Tech Mono', monospace;
             font-size: 24px;
             cursor: pointer;
-            margin-top: 30px;
+            transition: all 0.2s;
             text-transform: uppercase;
             letter-spacing: 2px;
-            box-shadow: 0 0 15px var(--neon-pink);
-            transition: transform 0.1s;
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.4);
+            margin-top: 20px;
         }
 
         .btn:hover {
@@ -335,13 +325,11 @@
             text-align: center;
             margin-bottom: 20px;
             padding: 5px;
-            /* Moved to top, no border needed now */
         }
 
         .heart {
             font-size: 32px;
             color: #444;
-            /* Empty heart color */
             margin: 0 5px;
             display: inline-block;
             transition: color 0.2s;
@@ -370,57 +358,25 @@
         }
 
         @keyframes shake {
-
-            10%,
-            90% {
-                transform: translate3d(-1px, 0, 0);
-            }
-
-            20%,
-            80% {
-                transform: translate3d(2px, 0, 0);
-            }
-
-            30%,
-            50%,
-            70% {
-                transform: translate3d(-4px, 0, 0);
-            }
-
-            40%,
-            60% {
-                transform: translate3d(4px, 0, 0);
-            }
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
         }
 
         @keyframes flash {
-            0% {
-                background-color: rgba(0, 243, 255, 0.5);
-            }
-
-            100% {
-                background-color: transparent;
-            }
+            0% { background-color: rgba(0, 243, 255, 0.5); }
+            100% { background-color: transparent; }
         }
 
         @keyframes flashRed {
-            0% {
-                background-color: rgba(255, 0, 85, 0.6);
-            }
-
-            100% {
-                background-color: transparent;
-            }
+            0% { background-color: rgba(255, 0, 85, 0.6); }
+            100% { background-color: transparent; }
         }
 
         @keyframes flashGreen {
-            0% {
-                background-color: rgba(0, 255, 157, 0.6);
-            }
-
-            100% {
-                background-color: transparent;
-            }
+            0% { background-color: rgba(0, 255, 157, 0.6); }
+            100% { background-color: transparent; }
         }
 
         #message-area {
@@ -436,6 +392,39 @@
             transition: opacity 0.5s;
             text-align: center;
             white-space: pre-line;
+            z-index: 20;
+        }
+
+        #pause-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            gap: 20px;
+        }
+
+        #pause-btn {
+            background: transparent;
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 5px 10px;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        #pause-btn:hover {
+            background: rgba(0, 243, 255, 0.2);
         }
 
         .hidden {
@@ -470,33 +459,67 @@
         <!-- Message Overlay (Vent/Level Up) -->
         <div id="message-area">SYSTEM VENTED</div>
 
-        <!-- Profile Selection Screen (First Load) -->
-        <div id="profile-screen">
-            <h1 style="color: var(--neon-yellow)">IDENTITY VERIFICATION</h1>
-            <p>Select Operator Profile</p>
+        <!-- Pause Overlay -->
+        <div id="pause-overlay" class="hidden">
+            <h1 style="color: var(--neon-yellow)">SYSTEM PAUSED</h1>
+            <button class="btn" onclick="togglePause()">RESUME</button>
+            <button class="btn btn-secondary" onclick="showStartScreen()">ABORT MISSION</button>
+        </div>
+
+        <!-- Welcome Screen (Existing User) -->
+        <div id="welcome-screen" class="hidden">
+            <h1 style="color: var(--neon-cyan)">IDENTITY VERIFIED</h1>
+            <p>Welcome back, <span id="welcome-name" style="color: var(--neon-green)">OPERATIVE</span></p>
+            
+            <div style="margin: 30px 0;">
+                <button class="btn" onclick="confirmIdentity()">CONTINUE</button>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn btn-secondary" style="font-size: 16px; padding: 10px 20px;" onclick="showProfileScreen()">CHANGE IDENTITY</button>
+                <button class="btn btn-secondary" style="font-size: 16px; padding: 10px 20px;" onclick="showCreateProfile()">CREATE IDENTITY</button>
+            </div>
+        </div>
+
+        <!-- Profile Selection Screen (Change Identity) -->
+        <div id="profile-screen" class="hidden">
+            <h1 style="color: var(--neon-yellow)">SELECT IDENTITY</h1>
+            <p>Available Operator Profiles</p>
 
             <div id="profile-list">
                 <!-- Profile items injected here -->
             </div>
 
-            <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 20px;">
-                <p style="font-size: 14px;">OR CREATE NEW IDENTITY</p>
-                <input type="text" id="new-profile-input" placeholder="ENTER CODENAME" maxlength="12">
-                <br>
-                <button class="btn btn-secondary" onclick="createNewProfile()">Create & Login</button>
+            <div style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="showWelcomeScreen()">CANCEL</button>
+            </div>
+        </div>
+
+        <!-- Create Profile Screen -->
+        <div id="create-profile-screen" class="hidden">
+            <h1 style="color: var(--neon-yellow)">NEW IDENTITY</h1>
+            <p>Enter Codename</p>
+            <input type="text" id="new-profile-input" placeholder="ENTER CODENAME" maxlength="12">
+            <br>
+            <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+                <button class="btn" onclick="createNewProfile()">CONFIRM</button>
+                <button class="btn btn-secondary" onclick="showWelcomeScreen()">CANCEL</button>
             </div>
         </div>
 
         <!-- Leaderboard Screen -->
         <div id="leaderboard-screen" class="hidden">
             <h1 style="color: var(--neon-yellow)">CLASSIFIED RECORDS</h1>
-            <p style="margin-bottom: 20px;">Top Operatives (Local Database)</p>
+            <p style="margin-bottom: 20px;">Top Operatives</p>
 
             <div id="leaderboard-list">
                 <!-- Leaderboard items injected here -->
             </div>
 
-            <button class="btn" onclick="showStartScreen()">Return</button>
+            <div style="display:flex; gap: 20px; justify-content: center; margin-top: 20px;">
+                <button class="btn" onclick="startGame()">RESTART MISSION</button>
+                <button class="btn btn-secondary" onclick="showStartScreen()">MAIN MENU</button>
+            </div>
         </div>
 
         <!-- Level Up Screen (Pause) -->
@@ -533,7 +556,7 @@
 
             <h1>SUMFALL</h1>
             <p><strong>THE ACCUMULATOR PROTOCOL</strong></p>
-            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">v1.4.0 // DESIGN UPDATE</p>
+            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">v1.5.0 // SYSTEM UPDATE</p>
             <p><strong>RULES OF ENGAGEMENT:</strong><br>
                 1. SMALL Numbers fall FAST.<br>
                 2. BIG Numbers fall SLOW.<br>
@@ -541,8 +564,7 @@
                 4. Floor Impact = <strong>-2 Hearts</strong>.</p>
 
             <div style="display:flex; gap: 20px;">
-                <button class="btn" onclick="startGame()">Initialize</button>
-                <button class="btn btn-secondary" onclick="showLeaderboard()">Records</button>
+                <button class="btn" onclick="startGame()">INITIALIZE</button>
             </div>
         </div>
 
@@ -556,8 +578,7 @@
                 <div class="hud-label" style="margin-top:10px;">Personal Best</div>
                 <div class="stat-val" id="final-pb" style="color: var(--neon-yellow); font-size: 18px;">0</div>
             </div>
-            <button class="btn" onclick="startGame()">Reboot System</button>
-            <button class="btn btn-secondary" onclick="showStartScreen()">Main Menu</button>
+            <button class="btn" onclick="showLeaderboard()">NEXT</button>
         </div>
 
         <!-- Left Panel: Matrix -->
@@ -570,8 +591,10 @@
 
         <!-- Right Panel: Reactor -->
         <div id="reactor-panel">
+            <!-- Pause Button -->
+            <button id="pause-btn" onclick="togglePause()">||</button>
+
             <div style="width: 100%;">
-                <!-- MOVED TO TOP -->
                 <div class="life-container">
                     <div class="hud-label">SYS INTEGRITY</div>
                     <div id="lifeline-display">
@@ -613,7 +636,7 @@
 
     <script>
         /* * SUMFALL ENGINE
-         * V1.4: UI Updates (Hearts, Top Position, Clean Input)
+         * V1.5: Flow Updates & Pause
          */
 
         const canvas = document.getElementById('gameCanvas');
@@ -659,6 +682,20 @@
                     this.profiles = JSON.parse(stored);
                 }
 
+                // Load last profile
+                const lastId = localStorage.getItem('sumfall_last_profile');
+                if (lastId && this.profiles[lastId]) {
+                    this.select(lastId, false);
+                    showWelcomeScreen();
+                } else if (Object.keys(this.profiles).length > 0) {
+                    // Pick first if no last used
+                    const firstId = Object.keys(this.profiles)[0];
+                    this.select(firstId, false);
+                    showWelcomeScreen();
+                } else {
+                    showProfileScreen();
+                }
+
                 // If online, try to fetch global leaderboard to cache it
                 if (isOnline) {
                     await this.fetchGlobalLeaderboard();
@@ -681,11 +718,12 @@
                 this.select(id);
             },
 
-            select(id) {
+            select(id, transition = true) {
                 if (this.profiles[id]) {
                     this.currentProfileId = id;
+                    localStorage.setItem('sumfall_last_profile', id);
                     this.updateUI();
-                    showStartScreen();
+                    if (transition) showStartScreen();
                 }
             },
 
@@ -694,10 +732,8 @@
                 const p = this.profiles[this.currentProfileId];
 
                 // Update Local Stats
-                let newHigh = false;
                 if (score > p.highScore) {
                     p.highScore = score;
-                    newHigh = true;
                 }
                 if (level > p.maxLevel) p.maxLevel = level;
                 p.gamesPlayed++;
@@ -707,10 +743,9 @@
                 // Sync to Global Leaderboard if Online
                 if (isOnline && db) {
                     try {
-                        // We only send if it's a good score or just to track activity
                         await db.collection("scores").doc(p.id).set({
                             name: p.name,
-                            highScore: p.highScore, // Always send best score
+                            highScore: p.highScore,
                             maxLevel: p.maxLevel,
                             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                         }, { merge: true });
@@ -750,7 +785,6 @@
                 if (isOnline && this.leaderboardCache.length > 0) {
                     return this.leaderboardCache;
                 }
-                // Fallback to local
                 return Object.values(this.profiles).sort((a, b) => b.highScore - a.highScore);
             },
 
@@ -787,6 +821,7 @@
         // --- GAME STATE ---
         let state = {
             isPlaying: false,
+            isPaused: false,
             score: 0,
             level: 1,
             lifelines: 3,
@@ -796,7 +831,7 @@
             particles: [],
             lastTime: 0,
             spawnTimer: 0,
-            spawnInterval: 2500, // ms
+            spawnInterval: 2500,
             speedMultiplier: 1
         };
 
@@ -814,7 +849,7 @@
             return "QUANTUM CORE";
         }
 
-        // Audio Context (Synthesized Sound)
+        // Audio Context
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
         function playSound(type) {
@@ -868,6 +903,27 @@
             document.getElementById('profile-screen').classList.remove('hidden');
         }
 
+        function showCreateProfile() {
+            hideAllScreens();
+            document.getElementById('create-profile-screen').classList.remove('hidden');
+            document.getElementById('new-profile-input').focus();
+        }
+
+        function showWelcomeScreen() {
+            hideAllScreens();
+            const p = profileSystem.getCurrent();
+            if (p) {
+                document.getElementById('welcome-name').innerText = p.name;
+                document.getElementById('welcome-screen').classList.remove('hidden');
+            } else {
+                showProfileScreen();
+            }
+        }
+
+        function confirmIdentity() {
+            showStartScreen();
+        }
+
         function createNewProfile() {
             const name = document.getElementById('new-profile-input').value;
             profileSystem.create(name);
@@ -875,7 +931,7 @@
 
         function showStartScreen() {
             hideAllScreens();
-            profileSystem.updateUI(); // Refresh high scores
+            profileSystem.updateUI();
             document.getElementById('start-screen').classList.remove('hidden');
         }
 
@@ -885,7 +941,6 @@
             list.innerHTML = '<div style="padding:20px; color:#666">LOADING DATA...</div>';
             document.getElementById('leaderboard-screen').classList.remove('hidden');
 
-            // Refresh data if online
             if (isOnline) {
                 await profileSystem.fetchGlobalLeaderboard();
             }
@@ -896,7 +951,6 @@
             if (data.length === 0) {
                 list.innerHTML = '<div style="padding:20px; color:#666">NO RECORDS FOUND</div>';
             } else {
-                // Add Online/Offline Indicator
                 const statusDiv = document.createElement('div');
                 statusDiv.style.cssText = "font-size: 12px; color: #666; margin-bottom: 10px; text-align: right; width: 100%;";
                 statusDiv.innerText = isOnline ? "● LIVE GLOBAL DATA" : "○ LOCAL DATA ONLY";
@@ -907,7 +961,6 @@
                     const div = document.createElement('div');
                     div.className = 'leaderboard-item';
 
-                    // Add Trophy icons for top 3
                     let rankDisplay = (index + 1) + '.';
                     if (index === 0) rankDisplay = '🥇';
                     if (index === 1) rankDisplay = '🥈';
@@ -925,7 +978,7 @@
         }
 
         function hideAllScreens() {
-            const screens = ['start-screen', 'game-over-screen', 'level-screen', 'profile-screen', 'leaderboard-screen'];
+            const screens = ['start-screen', 'game-over-screen', 'level-screen', 'profile-screen', 'create-profile-screen', 'leaderboard-screen', 'welcome-screen', 'pause-overlay'];
             screens.forEach(id => document.getElementById(id).classList.add('hidden'));
         }
 
@@ -946,9 +999,10 @@
 
             state = {
                 isPlaying: true,
+                isPaused: false,
                 score: 0,
                 level: 1,
-                lifelines: 3, // START WITH 3 LIVES
+                lifelines: 3,
                 reactorTotal: 0,
                 bankTarget: 50,
                 blocks: [],
@@ -965,11 +1019,24 @@
             requestAnimationFrame(gameLoop);
         }
 
+        function togglePause() {
+            if (!state.isPlaying) return;
+            
+            state.isPaused = !state.isPaused;
+            if (state.isPaused) {
+                document.getElementById('pause-overlay').classList.remove('hidden');
+                state.lastTime = 0;
+            } else {
+                document.getElementById('pause-overlay').classList.add('hidden');
+                state.lastTime = performance.now();
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
         function gameOver() {
             state.isPlaying = false;
             playSound('error');
 
-            // SAVE STATS
             profileSystem.saveGame(state.score, state.level);
             profileSystem.updateUI();
 
@@ -980,7 +1047,6 @@
         function spawnBlock() {
             const lane = Math.floor(Math.random() * LANE_COUNT);
 
-            // --- DYNAMIC DIFFICULTY CURVE (BALANCED) ---
             let minVal = 1;
             let maxVal = 9;
 
@@ -998,16 +1064,10 @@
                 maxVal = 99;
             }
 
-            // Generate value based on range
             let val = Math.floor(Math.random() * (maxVal - minVal + 1)) + minVal;
 
-            // --- INVERSE SPEED FORMULA ---
-            // Base speed from level
             let baseLevelSpeed = (30 + (state.level * 5)) * (canvas.height / 600);
-            // Multiplier: Small numbers fall fast, Big numbers fall slow
-            // Val 1 = ~3x speed. Val 50 = ~1.1x speed.
             let valMultiplier = 1 + (15 / (val + 5));
-
             let speed = baseLevelSpeed * valMultiplier;
 
             state.blocks.push({
@@ -1035,7 +1095,6 @@
             state.lifelines -= amount;
             if (state.lifelines < 0) state.lifelines = 0;
 
-            // Visual Feedback
             const container = document.getElementById('game-container');
             container.classList.add('flash-red');
             container.classList.add('shake');
@@ -1053,10 +1112,8 @@
 
         function triggerVent() {
             playSound('vent');
-            playSound('life-up'); // New Sound
-            const reactor = document.getElementById('reactor-panel');
-
-            // Add Life Reward
+            playSound('life-up');
+            
             state.lifelines++;
             const container = document.getElementById('game-container');
             container.classList.add('flash-green');
@@ -1075,13 +1132,8 @@
             state.isPlaying = false;
 
             setTimeout(() => {
-                // reactor.classList.remove('flash');
-                // document.body.classList.remove('shake');
-
-                // UPDATE LEVEL SCREEN WITH REWARDS
                 document.getElementById('next-level-val').innerText = state.level;
                 document.getElementById('rank-title').innerText = getRankTitle(state.level);
-
                 document.getElementById('level-screen').classList.remove('hidden');
             }, 600);
         }
@@ -1096,14 +1148,13 @@
         }
 
         function gameLoop(timestamp) {
-            if (!state.isPlaying) return;
+            if (!state.isPlaying || state.isPaused) return;
 
             const dt = (timestamp - state.lastTime) / 1000;
             state.lastTime = timestamp;
 
             state.spawnTimer += dt * 1000;
 
-            // LIMIT BLOCKS ON SCREEN (Max 2 for early levels, Max 3 for later)
             const maxBlocks = state.level < 5 ? 2 : 3;
 
             if (state.spawnTimer > state.spawnInterval) {
@@ -1117,9 +1168,8 @@
                 let b = state.blocks[i];
                 b.y += b.speed * dt;
 
-                // FLOOR COLLISION = -2 LIVES
                 if (b.y > canvas.height) {
-                    state.blocks.splice(i, 1); // Destroy block
+                    state.blocks.splice(i, 1);
                     playSound('error');
                     loseLife(2);
                 }
@@ -1177,15 +1227,10 @@
             document.getElementById('score-val').innerText = state.score;
             document.getElementById('level-val').innerText = state.level;
 
-            // Update Lifeline Hearts (Visual Update)
             const lifeContainer = document.getElementById('lifeline-display');
-            lifeContainer.innerHTML = ''; // Clear previous hearts
+            lifeContainer.innerHTML = '';
 
-            // Render Hearts
-            // Show a max of 5 hearts visually to prevent overflow, if user has more, maybe just show number? 
-            // For now, let's just show them all, assuming user won't stack 20 lives easily.
-
-            for (let i = 0; i < 5; i++) { // Always show 5 slots
+            for (let i = 0; i < 5; i++) {
                 const heart = document.createElement('span');
                 heart.className = 'heart';
                 heart.innerHTML = '♥';
@@ -1204,7 +1249,7 @@
         }
 
         inputField.addEventListener('keydown', (e) => {
-            if (!state.isPlaying) return;
+            if (!state.isPlaying || state.isPaused) return;
 
             if (e.key === 'Enter') {
                 const val = parseInt(inputField.value);
@@ -1241,15 +1286,20 @@
 
                 if (!hit) {
                     playSound('error');
-                    // WRONG ANSWER = -1 LIFE
                     loseLife(1);
                 }
                 inputField.value = '';
             }
         });
 
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                togglePause();
+            }
+        });
+
         document.addEventListener('click', () => {
-            if (state.isPlaying) inputField.focus();
+            if (state.isPlaying && !state.isPaused) inputField.focus();
         });
 
         // Initialize
@@ -1257,5 +1307,4 @@
 
     </script>
 </body>
-
 </html>
