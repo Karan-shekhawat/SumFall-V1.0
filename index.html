@@ -831,7 +831,10 @@
                 const ids = Object.keys(this.profiles);
 
                 if (ids.length === 0) {
-                    list.innerHTML = '<div style="color:#666; padding:10px;">NO IDENTITIES FOUND</div>';
+                    list.innerHTML = `
+                        <div style="color:#666; padding:10px;">NO IDENTITIES FOUND</div>
+                        <button class="btn" style="margin-top: 20px; width: 100%;" onclick="showCreateProfile()">CREATE IDENTITY</button>
+                    `;
                     return;
                 }
 
